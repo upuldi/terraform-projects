@@ -1,7 +1,7 @@
 variable "tags" {
-  type = map(string)
+  type        = map(string)
   description = "Tags to apply to the ASG and its resources"
-  default = {}
+  default     = {}
 }
 variable "desired_capacity" {
   type = number
@@ -16,7 +16,7 @@ variable "min_size" {
 }
 
 variable "subnet_ids" {
-  type = list(string)
+  type        = list(string)
   description = "A list of subnet IDs to launch resources in."
 }
 

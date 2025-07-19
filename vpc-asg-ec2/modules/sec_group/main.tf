@@ -19,7 +19,7 @@ resource "aws_vpc_security_group_ingress_rule" "this" {
   ip_protocol       = each.value.protocol
   description       = each.value.description
 
-  cidr_ipv4                  = lookup(each.value, "cidr_block", null)
+  cidr_ipv4                    = lookup(each.value, "cidr_block", null)
   referenced_security_group_id = lookup(each.value, "referenced_sg_id", null)
 }
 

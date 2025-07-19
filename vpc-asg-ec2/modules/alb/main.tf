@@ -11,10 +11,10 @@ resource "aws_lb" "public" {
 }
 
 resource "aws_lb_target_group" "public" {
-  name     = "${var.name}-tg"
-  port     = 80
-  protocol = "HTTP"
-  vpc_id   = var.vpc_id
+  name        = "${var.name}-tg"
+  port        = 80
+  protocol    = "HTTP"
+  vpc_id      = var.vpc_id
   target_type = "instance"
   health_check {
     path                = "/"

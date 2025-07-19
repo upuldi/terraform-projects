@@ -1,10 +1,10 @@
 variable "name" {
-  type = string
+  type        = string
   description = "Name tag for the VPC"
 }
 
 variable "app" {
-  type = string
+  type        = string
   description = "App tag for the VPC"
 }
 

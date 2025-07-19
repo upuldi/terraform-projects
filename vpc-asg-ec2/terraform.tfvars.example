@@ -1,0 +1,32 @@
+# Project Configuration
+name        = "my-stack"
+app         = "my-app"
+environment = "dev"
+region      = "ap-southeast-2"
+
+# VPC Configuration
+vpc_cidr_block       = "10.0.0.0/16"
+public_subnet_cidrs  = ["10.0.1.0/24", "10.0.2.0/24"]
+private_subnet_cidrs = ["10.0.101.0/24", "10.0.102.0/24"]
+
+# EC2 Configuration
+instance_type = "t2.micro"
+
+# Auto Scaling Configuration
+asg_desired_capacity = 1
+asg_max_size        = 3
+asg_min_size        = 1
+
+# Scaling Policy Configuration (optional)
+# enable_scaling       = true
+# scale_up_threshold   = 70
+# scale_down_threshold = 20
+# scaling_adjustment   = 1
+# cooldown_period     = 300
+
+# Launch Template Configuration (optional)
+# enable_monitoring    = true
+# ebs_optimized       = false
+# key_pair_name       = "my-key-pair"
+# root_volume_size    = 8
+# root_volume_type    = "gp3"

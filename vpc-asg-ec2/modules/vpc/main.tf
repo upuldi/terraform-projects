@@ -47,20 +47,28 @@ resource "aws_internet_gateway" "igw" {
 }
 
 resource "aws_eip" "nat" {
+  count  = var.enable_nat_gateway ? (var.single_nat_gateway ? 1 : length(var.public_subnet_cidrs)) : 0
   domain = "vpc"
+
   tags = {
-    Name = "${var.name}-nat-eip"
+    Name = "${var.name}-nat-eip-${count.index + 1}"
     App  = var.app
   }
+
+  depends_on = [aws_internet_gateway.igw]
 }
 
 resource "aws_nat_gateway" "nat" {
-  allocation_id = aws_eip.nat.id
-  subnet_id     = aws_subnet.public[0].id
+  count         = var.enable_nat_gateway ? (var.single_nat_gateway ? 1 : length(var.public_subnet_cidrs)) : 0
+  allocation_id = aws_eip.nat[count.index].id
+  subnet_id     = aws_subnet.public[count.index].id
+
   tags = {
-    Name = "${var.name}-nat-gw"
+    Name = "${var.name}-nat-gw-${count.index + 1}"
     App  = var.app
   }
+
+  depends_on = [aws_internet_gateway.igw]
 }
 
 # --- Route Tables & Associations ---
@@ -86,21 +94,26 @@ resource "aws_route_table_association" "public" {
 }
 
 resource "aws_route_table" "private" {
+  count  = var.enable_nat_gateway ? (var.single_nat_gateway ? 1 : length(var.private_subnet_cidrs)) : 1
   vpc_id = aws_vpc.main.id
+
   tags = {
-    Name = "${var.name}-private-rt"
+    Name = "${var.name}-private-rt-${count.index + 1}"
     App  = var.app
   }
 }
 
 resource "aws_route" "private_nat" {
-  route_table_id         = aws_route_table.private.id
+  count                  = var.enable_nat_gateway ? (var.single_nat_gateway ? 1 : length(var.private_subnet_cidrs)) : 0
+  route_table_id         = aws_route_table.private[count.index].id
   destination_cidr_block = "0.0.0.0/0"
-  nat_gateway_id         = aws_nat_gateway.nat.id
+  nat_gateway_id         = var.single_nat_gateway ? aws_nat_gateway.nat[0].id : aws_nat_gateway.nat[count.index].id
 }
 
 resource "aws_route_table_association" "private" {
-  count          = length(aws_subnet.private)
-  subnet_id      = aws_subnet.private[count.index].id
-  route_table_id = aws_route_table.private.id
+  count     = length(aws_subnet.private)
+  subnet_id = aws_subnet.private[count.index].id
+  route_table_id = var.enable_nat_gateway ? (
+    var.single_nat_gateway ? aws_route_table.private[0].id : aws_route_table.private[count.index].id
+  ) : aws_route_table.private[0].id
 }

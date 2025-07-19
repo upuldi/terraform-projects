@@ -114,3 +114,15 @@ variable "asg_min_size" {
     error_message = "ASG min size must be between 0 and 10."
   }
 }
+
+variable "single_nat_gateway" {
+  description = "Use a single NAT Gateway for all private subnets (cost optimization vs high availability)"
+  type        = bool
+  default     = true
+}
+
+variable "enable_nat_gateway" {
+  description = "Enable NAT Gateway for private subnets (set to false to save costs if private instances don't need internet)"
+  type        = bool
+  default     = true
+}

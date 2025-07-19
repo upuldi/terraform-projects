@@ -34,9 +34,3 @@ variable "enable_nat_gateway" {
   type        = bool
   default     = true
 }
-
-variable "enable_vpn_gateway" {
-  description = "Enable VPN Gateway for the VPC"
-  type        = bool
-  default     = false
-}

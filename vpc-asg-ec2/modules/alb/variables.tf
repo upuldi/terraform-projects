@@ -22,3 +22,15 @@ variable "alb_security_group_id" {
   type        = string
   description = "Security group ID for the ALB"
 }
+
+variable "internal" {
+  description = "Whether the ALB is internal (private) or internet-facing"
+  type        = bool
+  default     = false
+}
+
+variable "subnet_ids" {
+  description = "List of subnet IDs for the ALB (public for external, private for internal)"
+  type        = list(string)
+  default     = []
+}

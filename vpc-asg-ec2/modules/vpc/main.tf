@@ -117,3 +117,192 @@ resource "aws_route_table_association" "private" {
     var.single_nat_gateway ? aws_route_table.private[0].id : aws_route_table.private[count.index].id
   ) : aws_route_table.private[0].id
 }
+
+# --- Network ACLs ---
+
+# Public Subnet Network ACL (Default - Allow All)
+resource "aws_network_acl" "public" {
+  vpc_id     = aws_vpc.main.id
+  subnet_ids = aws_subnet.public[*].id
+
+  tags = {
+    Name = "${var.name}-public-nacl"
+    App  = var.app
+  }
+}
+
+# Public NACL Rules - Allow all traffic (standard public subnet behavior)
+resource "aws_network_acl_rule" "public_inbound_all" {
+  network_acl_id = aws_network_acl.public.id
+  rule_number    = 100
+  protocol       = "-1"
+  rule_action    = "allow"
+  cidr_block     = "0.0.0.0/0"
+  from_port      = 0
+  to_port        = 0
+}
+
+resource "aws_network_acl_rule" "public_outbound_all" {
+  network_acl_id = aws_network_acl.public.id
+  rule_number    = 100
+  protocol       = "-1"
+  rule_action    = "allow"
+  cidr_block     = "0.0.0.0/0"
+  from_port      = 0
+  to_port        = 0
+  egress         = true
+}
+
+# Private Subnet Network ACL (Restrictive - Only from Public Subnets)
+resource "aws_network_acl" "private" {
+  vpc_id     = aws_vpc.main.id
+  subnet_ids = aws_subnet.private[*].id
+
+  tags = {
+    Name = "${var.name}-private-nacl"
+    App  = var.app
+  }
+}
+
+# Private NACL Inbound Rules - Only allow traffic from public subnets
+resource "aws_network_acl_rule" "private_inbound_from_public" {
+  count          = length(var.public_subnet_cidrs)
+  network_acl_id = aws_network_acl.private.id
+  rule_number    = 100 + count.index
+  protocol       = "-1"
+  rule_action    = "allow"
+  cidr_block     = var.public_subnet_cidrs[count.index]
+  from_port      = 0
+  to_port        = 0
+}
+
+# Allow inbound traffic from other private subnets (for internal communication)
+resource "aws_network_acl_rule" "private_inbound_from_private" {
+  count          = length(var.private_subnet_cidrs)
+  network_acl_id = aws_network_acl.private.id
+  rule_number    = 200 + count.index
+  protocol       = "-1"
+  rule_action    = "allow"
+  cidr_block     = var.private_subnet_cidrs[count.index]
+  from_port      = 0
+  to_port        = 0
+}
+
+# Allow ephemeral ports for return traffic from internet (for NAT Gateway)
+resource "aws_network_acl_rule" "private_inbound_ephemeral" {
+  network_acl_id = aws_network_acl.private.id
+  rule_number    = 300
+  protocol       = "tcp"
+  rule_action    = "allow"
+  cidr_block     = "0.0.0.0/0"
+  from_port      = 1024
+  to_port        = 65535
+}
+
+# Allow HTTPS return traffic for package updates
+resource "aws_network_acl_rule" "private_inbound_https_return" {
+  network_acl_id = aws_network_acl.private.id
+  rule_number    = 310
+  protocol       = "tcp"
+  rule_action    = "allow"
+  cidr_block     = "0.0.0.0/0"
+  from_port      = 443
+  to_port        = 443
+}
+
+# Allow HTTP return traffic for package updates
+resource "aws_network_acl_rule" "private_inbound_http_return" {
+  network_acl_id = aws_network_acl.private.id
+  rule_number    = 320
+  protocol       = "tcp"
+  rule_action    = "allow"
+  cidr_block     = "0.0.0.0/0"
+  from_port      = 80
+  to_port        = 80
+}
+
+# Private NACL Outbound Rules
+# Allow all outbound to public subnets
+resource "aws_network_acl_rule" "private_outbound_to_public" {
+  count          = length(var.public_subnet_cidrs)
+  network_acl_id = aws_network_acl.private.id
+  rule_number    = 100 + count.index
+  protocol       = "-1"
+  rule_action    = "allow"
+  cidr_block     = var.public_subnet_cidrs[count.index]
+  from_port      = 0
+  to_port        = 0
+  egress         = true
+}
+
+# Allow outbound to other private subnets
+resource "aws_network_acl_rule" "private_outbound_to_private" {
+  count          = length(var.private_subnet_cidrs)
+  network_acl_id = aws_network_acl.private.id
+  rule_number    = 200 + count.index
+  protocol       = "-1"
+  rule_action    = "allow"
+  cidr_block     = var.private_subnet_cidrs[count.index]
+  from_port      = 0
+  to_port        = 0
+  egress         = true
+}
+
+# Allow outbound HTTPS for package updates and SSM
+resource "aws_network_acl_rule" "private_outbound_https" {
+  network_acl_id = aws_network_acl.private.id
+  rule_number    = 300
+  protocol       = "tcp"
+  rule_action    = "allow"
+  cidr_block     = "0.0.0.0/0"
+  from_port      = 443
+  to_port        = 443
+  egress         = true
+}
+
+# Allow outbound HTTP for package updates
+resource "aws_network_acl_rule" "private_outbound_http" {
+  network_acl_id = aws_network_acl.private.id
+  rule_number    = 310
+  protocol       = "tcp"
+  rule_action    = "allow"
+  cidr_block     = "0.0.0.0/0"
+  from_port      = 80
+  to_port        = 80
+  egress         = true
+}
+
+# Allow outbound ephemeral ports for return traffic
+resource "aws_network_acl_rule" "private_outbound_ephemeral" {
+  network_acl_id = aws_network_acl.private.id
+  rule_number    = 320
+  protocol       = "tcp"
+  rule_action    = "allow"
+  cidr_block     = "0.0.0.0/0"
+  from_port      = 1024
+  to_port        = 65535
+  egress         = true
+}
+
+# Allow outbound DNS
+resource "aws_network_acl_rule" "private_outbound_dns_tcp" {
+  network_acl_id = aws_network_acl.private.id
+  rule_number    = 330
+  protocol       = "tcp"
+  rule_action    = "allow"
+  cidr_block     = "0.0.0.0/0"
+  from_port      = 53
+  to_port        = 53
+  egress         = true
+}
+
+resource "aws_network_acl_rule" "private_outbound_dns_udp" {
+  network_acl_id = aws_network_acl.private.id
+  rule_number    = 340
+  protocol       = "udp"
+  rule_action    = "allow"
+  cidr_block     = "0.0.0.0/0"
+  from_port      = 53
+  to_port        = 53
+  egress         = true
+}

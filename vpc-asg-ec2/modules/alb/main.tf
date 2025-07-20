@@ -1,9 +1,9 @@
 resource "aws_lb" "public" {
   name               = var.name
-  internal           = false
+  internal           = var.internal
   load_balancer_type = "application"
   security_groups    = [var.alb_security_group_id]
-  subnets            = var.public_subnet_ids
+  subnets            = length(var.subnet_ids) > 0 ? var.subnet_ids : var.public_subnet_ids
   tags = {
     Name = var.name
     App  = var.app

@@ -16,8 +16,21 @@ crash.*.log
 # passwords, private keys, and other secrets. These should not be part of version
 # control as they are data points which are potentially sensitive and subject
 # to change depending on the environment.
-*.tfvars
-*.tfvars.json
+# *.tfvars
+# *.tfvars.json
+
+# Exception: Allow environment-specific tfvars files for workspace management
+# These files contain environment configuration and should be version controlled
+!terraform.tfvars.dev
+!terraform.tfvars.staging  
+!terraform.tfvars.prod
+!terraform.tfvars.example
+
+# Still ignore any other tfvars files (like local testing files)
+terraform.tfvars
+*.auto.tfvars
+*.auto.tfvars.json
+*_local.tfvars
 
 # Ignore override files as they are usually used for local testing and overriding
 # values locally.
@@ -35,6 +48,12 @@ terraform.rc
 
 # Terraform lock file
 .terraform.lock.hcl
+
+# Terraform plan files (environment-specific)
+*.tfplan
+dev.tfplan
+staging.tfplan
+prod.tfplan
 
 # VS Code specific files
 .vscode/

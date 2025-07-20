@@ -1,6 +1,11 @@
 variable "name" {
   type        = string
   description = "Name tag for the ALB"
+  
+  validation {
+    condition     = length(var.name) <= 32
+    error_message = "ALB name must be 32 characters or less. Current length: ${length(var.name)}."
+  }
 }
 
 variable "app" {

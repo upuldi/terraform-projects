@@ -1,0 +1,26 @@
+# Development Environment Configuration
+name        = "myapp"
+app         = "my-app"
+environment = "dev"
+region      = "ap-southeast-2"
+
+# VPC Configuration - Smaller CIDR for dev
+vpc_cidr_block       = "10.10.0.0/16"
+public_subnet_cidrs  = ["10.10.1.0/24", "10.10.2.0/24"]
+private_subnet_cidrs = ["10.10.101.0/24", "10.10.102.0/24"]
+
+# Cost optimization for dev
+single_nat_gateway = true
+enable_nat_gateway = true
+
+# Smaller instances for dev
+instance_type = "t2.micro"
+
+# Minimal scaling for dev
+asg_desired_capacity = 1
+asg_max_size        = 2
+asg_min_size        = 1
+
+# Development-specific settings
+# enable_monitoring    = false  # Uncomment to disable detailed monitoring for cost savings
+# ebs_optimized       = false   # Uncomment for t2.micro compatibility
